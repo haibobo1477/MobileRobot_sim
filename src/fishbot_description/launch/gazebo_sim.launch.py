@@ -9,6 +9,17 @@ import launch_ros.parameter_descriptions
 
 
 
+
+
+
+### to run this file and use the nav2 to control the mobile robot, we need to active the diff_driver_controller
+### to get the odom node instead of using other controllers
+### so that we can use the nav2 on RViz to let the mobile robot move to place where we want.
+
+
+
+
+
 def generate_launch_description():
     
     urdf_package_path = get_package_share_directory('fishbot_description')
@@ -16,7 +27,7 @@ def generate_launch_description():
     # default_rviz_config_path = os.path.join(urdf_package_path, 'config', 'display_robot_model.rviz')
     default_gazebo_world_path = os.path.join(urdf_package_path, 'world', 'custom_room.world')
     
-    # 添加参数名为model:= xxxxxxxxx
+    # model:= xxxxxxxxx
     action_declare_arg_mode_path = launch.actions.DeclareLaunchArgument(
         name='model',default_value=str(default_xacro_path),
         description='加载模型文件.'
@@ -52,13 +63,13 @@ def generate_launch_description():
         output='screen'
     )
     
-    # 力控制
+    # effort controller
     action_load_effort_controller = launch.actions.ExecuteProcess(
         cmd='ros2 control load_controller fishbot_effort_controller --set-state active'.split(' '),
         output='screen'
     )
     
-    # 两轮差速控制
+    # diff_driver_controller
     action_load_diff_driver_controller = launch.actions.ExecuteProcess(
         cmd='ros2 control load_controller fishbot_diff_drive_controller --set-state active'.split(' '),
         output='screen'
@@ -91,17 +102,17 @@ def generate_launch_description():
                 on_exit=[action_load_joint_state_controller],
             )
         ),
-        launch.actions.RegisterEventHandler(
-            event_handler=launch.event_handlers.OnProcessExit(
-                target_action=action_spawn_entity,
-                on_exit=[action_load_effort_controller],
-            )
-        ),
         # launch.actions.RegisterEventHandler(
         #     event_handler=launch.event_handlers.OnProcessExit(
         #         target_action=action_spawn_entity,
-        #         on_exit=[action_load_diff_driver_controller],
+        #         on_exit=[action_load_effort_controller],
         #     )
         # ),
+        launch.actions.RegisterEventHandler(
+            event_handler=launch.event_handlers.OnProcessExit(
+                target_action=action_spawn_entity,
+                on_exit=[action_load_diff_driver_controller],
+            )
+        ),
         # action_rviz_node,
     ])
