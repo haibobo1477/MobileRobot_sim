@@ -7,6 +7,7 @@ import rclpy
 def main():
     rclpy.init()
     nav = BasicNavigator()
+    
     init_pose = PoseStamped()
     init_pose.header.frame_id = "map"
     init_pose.header.stamp = nav.get_clock().now().to_msg()
@@ -15,5 +16,6 @@ def main():
     init_pose.pose.orientation.w = 1.0
     nav.setInitialPose(init_pose)
     nav.waitUntilNav2Active()
+    
     rclpy.spin(nav)
     rclpy.shutdown()
