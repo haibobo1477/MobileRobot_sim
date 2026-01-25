@@ -22,4 +22,29 @@ if(BUILD_TESTING)
   ament_lint_auto_find_test_dependencies()
 endif()
 
+
+
+include_directories(include)
+set(library_name ${PROJECT_NAME}_plugin)
+
+add_library(${library_name} SHARED src/nav2_custom_planner.cpp)
+
+ament_target_dependencies(${library_name} nav2_core pluginlib)
+
+
+install(TARGETS ${library_name}
+    ARCHIVE DESTINATION lib
+    LIBRARY DESTINATION lib
+    RUNTIME DESTINATION lib/${PROJECT_NAME}
+)
+
+
+install(DIRECTORY include/
+  DESTINATION include/
+)
+
+
+pluginlib_export_plugin_description_file(nav2_core custom_planner_plugin.xml)
+
+
 ament_package()

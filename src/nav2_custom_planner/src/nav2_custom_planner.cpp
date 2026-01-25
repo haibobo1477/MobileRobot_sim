@@ -48,6 +48,67 @@ namespace nav2_custom_planner
                                                   const geometry_msgs::msg::PoseStamped &goal)
     {
         nav_msgs::msg::Path global_path;
+
+        global_path.poses.clear();
+        global_path.header.stamp = node_->now();
+        global_path.header.frame_id = global_frame_;
+        
+        if(start.header.frame_id != global_frame_)
+        {
+            RCLCPP_ERROR(node_->get_logger(), "planner only accept start point from %s", global_frame_.c_str());
+            return global_path;
+        }
+
+
+        if(goal.header.frame_id != global_frame_)
+        {
+            RCLCPP_ERROR(node_->get_logger(), "planner only accept target point from %s", global_frame_.c_str());
+            return global_path;
+        }
+
+        int total_number_of_loop = std::hypot(goal.pose.position.x - start.pose.position.x,
+                                              goal.pose.position.y - start.pose.position.y) / interpolation_resolution_;
+ 
+
+        double x_increment = (goal.pose.position.x - start.pose.position.x) / total_number_of_loop;
+        double y_increment = (goal.pose.position.y - start.pose.position.y) / total_number_of_loop;
+
+        for (int i = 0; i < total_number_of_loop; ++i)
+        {
+            geometry_msgs::msg::PoseStamped pose;
+            pose.pose.position.x = start.pose.position.x + x_increment * i;
+            pose.pose.position.y = start.pose.position.y + y_increment * i;
+            pose.pose.position.z = 0.0;
+            pose.header.stamp = node_->now();
+            pose.header.frame_id = global_frame_;
+
+            global_path.poses.push_back(pose);
+        }
+        
+
+        for (geometry_msgs::msg::PoseStamped pose : global_path.poses)
+        {
+            unsigned int mx, my;
+            if (costmap_->worldToMap(pose.pose.position.x, pose.pose.position.y, mx, my))
+            {
+                unsigned char cost = costmap_->getCost(mx, my);
+                if (cost == nav2_costmap_2d::LETHAL_OBSTACLE)
+                {
+                    RCLCPP_WARN(node_->get_logger(),"lethal obstacle is detected at (%f, %f).", pose.pose.position.x, pose.pose.position.y);
+                    throw nav2_core::PlannerException("unable to create planner of the target: " 
+                                                      + std::to_string(goal.pose.position.x) 
+                                                      + "," 
+                                                      + std::to_string(goal.pose.position.y));
+                }
+            }
+        }
+
+        geometry_msgs::msg::PoseStamped goal_pose = goal;
+        goal_pose.header.stamp = node_->now();
+        goal_pose.header.frame_id = global_frame_;
+        global_path.poses.push_back(goal_pose);
+
+
         return global_path;
     }
 

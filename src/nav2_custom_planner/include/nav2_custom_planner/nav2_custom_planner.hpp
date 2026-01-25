@@ -1,5 +1,6 @@
 #ifndef NAV2_CUSTOM_PLANNER_NAV2_CUSTOM_PLANNER_HPP_
 #define NAV2_CUSTOM_PLANNER_NAV2_CUSTOM_PLANNER_HPP_
+
 #include <memory>
 #include <string>
 
